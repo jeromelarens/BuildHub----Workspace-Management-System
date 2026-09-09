@@ -1,0 +1,42 @@
+{
+  "name": "task-management-backend",
+  "version": "3.0.0",
+  "description": "Production-quality Task Management System REST API Backend - Phase 1, Phase 2 & Phase 3 Part 1 & 2",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node test_admin_bootstrap.js && node test_validation.js && node test_phase2.js && node test_phase3_part1.js && node test_phase3_part2.js && node test_attachment_upload_suite.js && node run_postman_collection.js && node test_enterprise_suite.js",
+    "test:bootstrap": "node test_admin_bootstrap.js",
+    "test:phase1": "node test_validation.js",
+    "test:phase2": "node test_phase2.js",
+    "test:phase3:part1": "node test_phase3_part1.js",
+    "test:phase3:part2": "node test_phase3_part2.js",
+    "test:attachments": "node test_attachment_upload_suite.js",
+    "test:enterprise": "node test_enterprise_suite.js",
+    "test:all": "node test_admin_bootstrap.js && node test_validation.js && node test_phase2.js && node test_phase3_part1.js && node test_phase3_part2.js && node test_attachment_upload_suite.js && node run_postman_collection.js && node test_enterprise_suite.js",
+    "test:postman": "node run_postman_collection.js"
+  },
+  "keywords": [
+    "nodejs",
+    "express",
+    "postgresql",
+    "jwt",
+    "rbac",
+    "rest-api",
+    "task-management"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.6",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^8.6.2",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.2.0",
+    "pg": "^8.13.3"
+  }
+}

@@ -1,0 +1,75 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build & Compilation Outputs
+dist/
+**/dist/
+dist-ssr/
+build/
+out/
+.next/
+.turbo/
+.cache/
+.vite/
+
+# Environment Variables & Local Secrets
+.env
+.env.*
+!.env.example
+!.env.template
+*.local
+
+# Uploads & Temporary Media (Keep directory structure with .gitkeep)
+backend/uploads/task-attachments/*
+!backend/uploads/task-attachments/.gitkeep
+uploads/*
+!uploads/.gitkeep
+
+# Logs & Debug Output
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Documentation, Internal Reports & Audit Artifacts
+docs/
+*REPORT*.md
+*AUDIT*.md
+*WALKTHROUGH*.md
+*IMPLEMENTATION*.md
+*INVENTORY*.md
+*QA*.md
+*RELEASE*.md
+PHASE_*.md
+
+# IDE & Editor Directories
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.code-workspace
+
+# Operating System & Cache Files
+.DS_Store
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+$RECYCLE.BIN/
+
+# Temporary & Backup Files
+*.tmp
+*.temp
+*.bak
+*.backup
+*~
+*.swp
+*.swo
+*.dump
+*.sql.gz

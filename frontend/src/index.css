@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-brand: #C7FF00;
+    --color-brand-hover: #D4FF33;
+    --color-bg-dark: #080A08;
+    --color-surface: #101410;
+    --color-elevated: #151A15;
+    --color-border: #242A24;
+    --color-text-primary: #F5F7F2;
+    --color-text-secondary: #A1A99F;
+    --color-text-muted: #6F776D;
+  }
+
+  * {
+    border-color: #242A24;
+    box-sizing: border-box;
+  }
+
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: #080A08;
+    color: #F5F7F2;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* Custom Sleek Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #080A08;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #242A24;
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #333C33;
+  }
+
+  /* Focus outline styling */
+  :focus-visible {
+    outline: 2px solid #C7FF00;
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Subtle glass & elevated card patterns */
+  .card-surface {
+    background-color: #101410;
+    border: 1px solid #242A24;
+    border-radius: 14px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .card-surface:hover {
+    border-color: #333C33;
+  }
+
+  .interactive-item {
+    transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .interactive-item:hover {
+    background-color: #151A15;
+    border-color: #333C33;
+  }
+}
