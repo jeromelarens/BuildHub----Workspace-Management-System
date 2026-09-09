@@ -1,9 +1,9 @@
 -- =============================================================================
--- Task Management System Backend Database Schema (Phase 1, 2, 3 Part 1 & Part 2)
--- PostgreSQL DDL Script
+-- Task Management System Backend Database Schema
+-- PostgreSQL DDL Script (Production & Neon Compatible)
 -- =============================================================================
 
--- 1. Create Roles Table (Phase 3)
+-- 1. Create Roles Table
 CREATE TABLE IF NOT EXISTS roles (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) UNIQUE NOT NULL,
@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS roles (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 2. Create Permissions Table (Phase 3)
+-- 2. Create Permissions Table
 CREATE TABLE IF NOT EXISTS permissions (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) UNIQUE NOT NULL,
@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS permissions (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 3. Create Role Permissions Table (Phase 3)
+-- 3. Create Role Permissions Table
 CREATE TABLE IF NOT EXISTS role_permissions (
     id SERIAL PRIMARY KEY,
     role_id INTEGER NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
@@ -36,23 +36,49 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     role VARCHAR(50) DEFAULT 'employee',
+    email_verified_at TIMESTAMP DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 5. Create Projects Table
+-- 5. Create Workspaces Table
+CREATE TABLE IF NOT EXISTS workspaces (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(200) NOT NULL,
+    slug VARCHAR(200) UNIQUE NOT NULL,
+    description TEXT,
+    status VARCHAR(50) DEFAULT 'active',
+    owner_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 6. Create Workspace Members Table
+CREATE TABLE IF NOT EXISTS workspace_members (
+    id SERIAL PRIMARY KEY,
+    workspace_id INTEGER NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    role VARCHAR(50) NOT NULL DEFAULT 'member',
+    status VARCHAR(50) DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (workspace_id, user_id)
+);
+
+-- 7. Create Projects Table
 CREATE TABLE IF NOT EXISTS projects (
     id SERIAL PRIMARY KEY,
     name VARCHAR(200) NOT NULL,
     description TEXT,
     status VARCHAR(50) DEFAULT 'active',
     created_by INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    workspace_id INTEGER REFERENCES workspaces(id) ON DELETE CASCADE,
     deleted_at TIMESTAMP DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 6. Create Project Members Table
+-- 8. Create Project Members Table
 CREATE TABLE IF NOT EXISTS project_members (
     id SERIAL PRIMARY KEY,
     project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
@@ -62,7 +88,7 @@ CREATE TABLE IF NOT EXISTS project_members (
     UNIQUE (project_id, user_id)
 );
 
--- 7. Create Tasks Table
+-- 9. Create Tasks Table
 CREATE TABLE IF NOT EXISTS tasks (
     id SERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
@@ -73,12 +99,13 @@ CREATE TABLE IF NOT EXISTS tasks (
     project_id INTEGER REFERENCES projects(id) ON DELETE CASCADE,
     assigned_to INTEGER REFERENCES users(id) ON DELETE SET NULL,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    workspace_id INTEGER REFERENCES workspaces(id) ON DELETE CASCADE,
     deleted_at TIMESTAMP DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 8. Create Task Comments Table
+-- 10. Create Task Comments Table
 CREATE TABLE IF NOT EXISTS task_comments (
     id SERIAL PRIMARY KEY,
     task_id INTEGER NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
@@ -88,7 +115,7 @@ CREATE TABLE IF NOT EXISTS task_comments (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 9. Create Task Dependencies Table (Phase 3)
+-- 11. Create Task Dependencies Table
 CREATE TABLE IF NOT EXISTS task_dependencies (
     id SERIAL PRIMARY KEY,
     task_id INTEGER NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
@@ -98,7 +125,7 @@ CREATE TABLE IF NOT EXISTS task_dependencies (
     CONSTRAINT uq_task_dependency UNIQUE (task_id, depends_on_task_id)
 );
 
--- 10. Create Task Recurrence Rules Table (Phase 3)
+-- 12. Create Task Recurrence Rules Table
 CREATE TABLE IF NOT EXISTS task_recurrence_rules (
     id SERIAL PRIMARY KEY,
     task_id INTEGER NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
@@ -114,7 +141,7 @@ CREATE TABLE IF NOT EXISTS task_recurrence_rules (
     CONSTRAINT uq_task_recurrence_task_id UNIQUE (task_id)
 );
 
--- 11. Create Notifications Table (Phase 3)
+-- 13. Create Notifications Table
 CREATE TABLE IF NOT EXISTS notifications (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -124,10 +151,11 @@ CREATE TABLE IF NOT EXISTS notifications (
     entity_type VARCHAR(50),
     entity_id INTEGER,
     is_read BOOLEAN DEFAULT FALSE,
+    workspace_id INTEGER REFERENCES workspaces(id) ON DELETE CASCADE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 12. Create Task Activities Table (Phase 3)
+-- 14. Create Task Activities Table
 CREATE TABLE IF NOT EXISTS task_activities (
     id SERIAL PRIMARY KEY,
     task_id INTEGER NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
@@ -139,7 +167,7 @@ CREATE TABLE IF NOT EXISTS task_activities (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 13. Create Task Attachments Table (Phase 3 Part 2)
+-- 15. Create Task Attachments Table
 CREATE TABLE IF NOT EXISTS task_attachments (
     id SERIAL PRIMARY KEY,
     task_id INTEGER NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
@@ -151,7 +179,7 @@ CREATE TABLE IF NOT EXISTS task_attachments (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 14. Create Audit Logs Table (Phase 3 Part 2)
+-- 16. Create Audit Logs Table
 CREATE TABLE IF NOT EXISTS audit_logs (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
@@ -165,31 +193,7 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 15. Create Workspaces Table (Enterprise)
-CREATE TABLE IF NOT EXISTS workspaces (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(200) NOT NULL,
-    slug VARCHAR(200) UNIQUE NOT NULL,
-    description TEXT,
-    status VARCHAR(50) DEFAULT 'active',
-    owner_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- 16. Create Workspace Members Table (Enterprise)
-CREATE TABLE IF NOT EXISTS workspace_members (
-    id SERIAL PRIMARY KEY,
-    workspace_id INTEGER NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    role VARCHAR(50) NOT NULL DEFAULT 'member',
-    status VARCHAR(50) DEFAULT 'active',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (workspace_id, user_id)
-);
-
--- 17. Create Password Reset Tokens Table (Enterprise)
+-- 17. Create Password Reset Tokens Table
 CREATE TABLE IF NOT EXISTS password_reset_tokens (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -199,7 +203,7 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 18. Create Email Verification Tokens Table (Enterprise)
+-- 18. Create Email Verification Tokens Table
 CREATE TABLE IF NOT EXISTS email_verification_tokens (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -209,8 +213,7 @@ CREATE TABLE IF NOT EXISTS email_verification_tokens (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-
--- 21. Create Webhook Endpoints Table (Enterprise)
+-- 19. Create Webhook Endpoints Table
 CREATE TABLE IF NOT EXISTS webhook_endpoints (
     id SERIAL PRIMARY KEY,
     workspace_id INTEGER NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
@@ -224,7 +227,7 @@ CREATE TABLE IF NOT EXISTS webhook_endpoints (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 22. Create Webhook Events Table (Enterprise)
+-- 20. Create Webhook Events Table
 CREATE TABLE IF NOT EXISTS webhook_events (
     id SERIAL PRIMARY KEY,
     workspace_id INTEGER NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
@@ -234,7 +237,7 @@ CREATE TABLE IF NOT EXISTS webhook_events (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 23. Create Webhook Deliveries Table (Enterprise)
+-- 21. Create Webhook Deliveries Table
 CREATE TABLE IF NOT EXISTS webhook_deliveries (
     id SERIAL PRIMARY KEY,
     webhook_endpoint_id INTEGER NOT NULL REFERENCES webhook_endpoints(id) ON DELETE CASCADE,
@@ -250,7 +253,7 @@ CREATE TABLE IF NOT EXISTS webhook_deliveries (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 24. Create Custom Field Definitions Table (Enterprise)
+-- 22. Create Custom Field Definitions Table
 CREATE TABLE IF NOT EXISTS custom_field_definitions (
     id SERIAL PRIMARY KEY,
     workspace_id INTEGER NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
@@ -268,7 +271,7 @@ CREATE TABLE IF NOT EXISTS custom_field_definitions (
     UNIQUE (workspace_id, entity_type, field_key)
 );
 
--- 25. Create Custom Field Values Table (Enterprise)
+-- 23. Create Custom Field Values Table
 CREATE TABLE IF NOT EXISTS custom_field_values (
     id SERIAL PRIMARY KEY,
     field_definition_id INTEGER NOT NULL REFERENCES custom_field_definitions(id) ON DELETE CASCADE,
@@ -284,7 +287,7 @@ CREATE TABLE IF NOT EXISTS custom_field_values (
     UNIQUE (field_definition_id, entity_id)
 );
 
--- 26. Create Approval Workflows Table (Enterprise)
+-- 24. Create Approval Workflows Table
 CREATE TABLE IF NOT EXISTS approval_workflows (
     id SERIAL PRIMARY KEY,
     workspace_id INTEGER NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
@@ -297,7 +300,7 @@ CREATE TABLE IF NOT EXISTS approval_workflows (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 27. Create Approval Steps Table (Enterprise)
+-- 25. Create Approval Steps Table
 CREATE TABLE IF NOT EXISTS approval_steps (
     id SERIAL PRIMARY KEY,
     workflow_id INTEGER NOT NULL REFERENCES approval_workflows(id) ON DELETE CASCADE,
@@ -310,7 +313,7 @@ CREATE TABLE IF NOT EXISTS approval_steps (
     UNIQUE (workflow_id, step_order)
 );
 
--- 28. Create Approval Requests Table (Enterprise)
+-- 26. Create Approval Requests Table
 CREATE TABLE IF NOT EXISTS approval_requests (
     id SERIAL PRIMARY KEY,
     workspace_id INTEGER NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
@@ -326,7 +329,7 @@ CREATE TABLE IF NOT EXISTS approval_requests (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 29. Create Approval Actions Table (Enterprise)
+-- 27. Create Approval Actions Table
 CREATE TABLE IF NOT EXISTS approval_actions (
     id SERIAL PRIMARY KEY,
     request_id INTEGER NOT NULL REFERENCES approval_requests(id) ON DELETE CASCADE,
@@ -337,7 +340,7 @@ CREATE TABLE IF NOT EXISTS approval_actions (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 30. Create Time Entries Table (Enterprise)
+-- 28. Create Time Entries Table
 CREATE TABLE IF NOT EXISTS time_entries (
     id SERIAL PRIMARY KEY,
     workspace_id INTEGER NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
@@ -357,6 +360,11 @@ CREATE TABLE IF NOT EXISTS time_entries (
 -- Performance & Soft Delete Indexes
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+
+CREATE INDEX IF NOT EXISTS idx_workspaces_owner_id ON workspaces(owner_id);
+CREATE INDEX IF NOT EXISTS idx_workspaces_slug ON workspaces(slug);
+CREATE INDEX IF NOT EXISTS idx_workspace_members_ws ON workspace_members(workspace_id);
+CREATE INDEX IF NOT EXISTS idx_workspace_members_user ON workspace_members(user_id);
 
 CREATE INDEX IF NOT EXISTS idx_projects_created_by ON projects(created_by);
 CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status);
@@ -402,16 +410,10 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs(entity_type, enti
 CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_workspace_id ON audit_logs(workspace_id);
 
-CREATE INDEX IF NOT EXISTS idx_workspaces_owner_id ON workspaces(owner_id);
-CREATE INDEX IF NOT EXISTS idx_workspaces_slug ON workspaces(slug);
-CREATE INDEX IF NOT EXISTS idx_workspace_members_ws ON workspace_members(workspace_id);
-CREATE INDEX IF NOT EXISTS idx_workspace_members_user ON workspace_members(user_id);
-
 CREATE INDEX IF NOT EXISTS idx_pwd_reset_hash ON password_reset_tokens(token_hash);
 CREATE INDEX IF NOT EXISTS idx_pwd_reset_user ON password_reset_tokens(user_id);
 CREATE INDEX IF NOT EXISTS idx_email_verify_hash ON email_verification_tokens(token_hash);
 CREATE INDEX IF NOT EXISTS idx_email_verify_user ON email_verification_tokens(user_id);
-
 
 CREATE INDEX IF NOT EXISTS idx_webhook_endpoints_ws ON webhook_endpoints(workspace_id);
 CREATE INDEX IF NOT EXISTS idx_webhook_events_ws ON webhook_events(workspace_id);
@@ -437,4 +439,3 @@ CREATE INDEX IF NOT EXISTS idx_time_entries_task ON time_entries(task_id);
 CREATE INDEX IF NOT EXISTS idx_time_entries_project ON time_entries(project_id);
 CREATE INDEX IF NOT EXISTS idx_time_entries_status ON time_entries(status);
 CREATE INDEX IF NOT EXISTS idx_time_entries_started ON time_entries(started_at DESC);
-

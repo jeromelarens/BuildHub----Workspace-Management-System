@@ -60,6 +60,22 @@ const bootstrapAdmin = async () => {
     const insertResult = await db.query(insertQuery, [normalizedEmail, hashedPassword]);
     const newAdmin = insertResult.rows[0];
 
+    // Ensure default workspace ownership and membership
+    try {
+      const wsRes = await db.query("SELECT id FROM workspaces WHERE slug = 'default-workspace' LIMIT 1");
+      if (wsRes.rows.length > 0) {
+        const wsId = wsRes.rows[0].id;
+        await db.query(`
+          INSERT INTO workspace_members (workspace_id, user_id, role, status)
+          VALUES ($1, $2, 'owner', 'active')
+          ON CONFLICT (workspace_id, user_id) DO NOTHING
+        `, [wsId, newAdmin.id]);
+        await db.query('UPDATE workspaces SET owner_id = $1 WHERE id = $2 AND (owner_id IS NULL OR owner_id = $1)', [newAdmin.id, wsId]);
+      }
+    } catch (wsErr) {
+      console.warn('[Bootstrap] Workspace link note:', wsErr.message);
+    }
+
     console.log(`[Bootstrap] Default System Admin account initialized successfully (${newAdmin.email})`);
     return { created: true, email: newAdmin.email };
   }
@@ -68,6 +84,20 @@ const bootstrapAdmin = async () => {
 
   // If user exists and is already admin: verify and preserve existing record without modifying password
   if (existingUser.role === 'admin') {
+    try {
+      const wsRes = await db.query("SELECT id FROM workspaces WHERE slug = 'default-workspace' LIMIT 1");
+      if (wsRes.rows.length > 0) {
+        const wsId = wsRes.rows[0].id;
+        await db.query(`
+          INSERT INTO workspace_members (workspace_id, user_id, role, status)
+          VALUES ($1, $2, 'owner', 'active')
+          ON CONFLICT (workspace_id, user_id) DO NOTHING
+        `, [wsId, existingUser.id]);
+        await db.query('UPDATE workspaces SET owner_id = $1 WHERE id = $2 AND (owner_id IS NULL OR owner_id = $1)', [existingUser.id, wsId]);
+      }
+    } catch (wsErr) {
+      console.warn('[Bootstrap] Workspace link note:', wsErr.message);
+    }
     console.log(`[Bootstrap] Default System Admin account verified (${existingUser.email})`);
     return { created: false, email: existingUser.email, verified: true };
   }
